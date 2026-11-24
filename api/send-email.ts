@@ -54,13 +54,15 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   }
 
   // Provider 1: Gmail SMTP (Zero-cost, works for sending to any recipient without buying a domain)
-  const gmailUser = process.env.GMAIL_USER?.trim();
-  const gmailPass = process.env.GMAIL_APP_PASSWORD?.replace(/\s+/g, '').trim();
+  const gmailUser = process.env.GMAIL_USER?.trim().replace(/^["']|["']$/g, '');
+  const gmailPass = process.env.GMAIL_APP_PASSWORD?.replace(/[^a-zA-Z0-9]/g, '');
 
   if (gmailUser && gmailPass) {
     try {
       const transporter = nodemailer.createTransport({
-        service: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
         auth: {
           user: gmailUser,
           pass: gmailPass,
@@ -81,13 +83,18 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
         id: info.messageId,
       });
     } catch (err) {
+      const [localPart, domainPart] = gmailUser.split('@');
+      const maskedUser =
+        localPart && domainPart
+          ? `${localPart.slice(0, 3)}***@${domainPart}`
+          : gmailUser;
+      const errMsg =
+        err instanceof Error ? err.message : 'Gmail üzerinden gönderilemedi.';
+
       return res.status(502).json({
         ok: false,
         provider: 'gmail',
-        error:
-          err instanceof Error
-            ? `Gmail gönderim hatası: ${err.message}`
-            : 'Gmail üzerinden gönderilemedi.',
+        error: `Gmail gönderim hatası (${maskedUser} • şifre ${gmailPass.length} karakter): ${errMsg}`,
       });
     }
   }
