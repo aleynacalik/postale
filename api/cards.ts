@@ -24,10 +24,15 @@ function generateShortId(length = 7): string {
 }
 
 function getSupabaseConfig() {
-  const url = process.env.SUPABASE_URL?.replace(/\/+$/, '');
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  const url = process.env.SUPABASE_URL?.replace(/\/+$/, '').trim();
+  const key = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY)?.trim();
   if (!url || !key) return null;
-  return { url, key };
+  const headers: Record<string, string> = { apikey: key };
+  // Legacy JWT keys (eyJ...) require Authorization: Bearer, while new sb_secret_ keys must ONLY use apikey
+  if (key.split('.').length === 3) {
+    headers.Authorization = `Bearer ${key}`;
+  }
+  return { url, headers };
 }
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
@@ -55,10 +60,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       const response = await fetch(
         `${config.url}/rest/v1/cards?id=eq.${encodeURIComponent(id)}&select=id,data,created_at&limit=1`,
         {
-          headers: {
-            apikey: config.key,
-            Authorization: `Bearer ${config.key}`,
-          },
+          headers: config.headers,
         }
       );
 
@@ -106,8 +108,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       const response = await fetch(`${config.url}/rest/v1/cards`, {
         method: 'POST',
         headers: {
-          apikey: config.key,
-          Authorization: `Bearer ${config.key}`,
+          ...config.headers,
           'Content-Type': 'application/json',
           Prefer: 'return=minimal',
         },
