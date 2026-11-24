@@ -15,6 +15,7 @@ import { SendModal } from './components/SendModal';
 import { StudioSidebar } from './components/StudioSidebar';
 import { DEFAULT_POSTCARD } from './data/presets';
 import { PostcardData, TemplatePreset } from './types';
+import { extractShortCardIdFromUrl, fetchCardFromServer } from './utils/api';
 import { playCardFlip } from './utils/audio';
 import { decodePostcardFromHash, loadDraft, saveDraft } from './utils/share';
 
@@ -24,6 +25,8 @@ type StageView = 'envelope' | 'front' | 'back';
 export default function App() {
   const [mode, setMode] = useState<AppMode>('studio');
   const [isRecipientFromLink, setIsRecipientFromLink] = useState(false);
+  const [loadingSharedCard, setLoadingSharedCard] = useState(false);
+  const [sharedCardError, setSharedCardError] = useState<string | null>(null);
   const [stageView, setStageView] = useState<StageView>('envelope');
   const [envelopeClosedInStudio, setEnvelopeClosedInStudio] = useState(false);
   const [sendModalOpen, setSendModalOpen] = useState(false);
@@ -35,8 +38,25 @@ export default function App() {
     return saved || DEFAULT_POSTCARD;
   });
 
-  // Detect shared link on initial load or hash change
+  // Detect short link (/m/abc1234) or hash link (#m=...)
   useEffect(() => {
+    const shortId = extractShortCardIdFromUrl();
+    if (shortId) {
+      setLoadingSharedCard(true);
+      setSharedCardError(null);
+      fetchCardFromServer(shortId).then((res) => {
+        setLoadingSharedCard(false);
+        if (res.ok && res.card) {
+          setCard(res.card);
+          setMode('recipient');
+          setIsRecipientFromLink(true);
+        } else {
+          setSharedCardError(res.error || 'Bu kartpostal bulunamadı.');
+        }
+      });
+      return;
+    }
+
     const checkHash = () => {
       const shared = decodePostcardFromHash(window.location.hash);
       if (shared) {
@@ -52,10 +72,10 @@ export default function App() {
 
   // Auto-save draft when editing in studio
   useEffect(() => {
-    if (mode === 'studio') {
+    if (mode === 'studio' && !loadingSharedCard && !sharedCardError) {
       saveDraft(card);
     }
-  }, [card, mode]);
+  }, [card, mode, loadingSharedCard, sharedCardError]);
 
   const handlePatchCard = (patch: Partial<PostcardData>) => {
     setCard((prev) => ({ ...prev, ...patch }));
@@ -64,16 +84,15 @@ export default function App() {
   const handleApplyPreset = (preset: TemplatePreset) => {
     setCard((prev) => ({
       ...preset.data,
-      // Keep user's custom uploaded media if they want? Actually preset resets cleanly for true template preview
       customPhoto: prev.customPhoto,
       customStamp: prev.customStamp,
     }));
   };
 
   const handleReplyFromRecipient = () => {
-    // Clear hash and open studio pre-populated as a reply
-    window.history.replaceState(null, '', window.location.pathname);
+    window.history.replaceState(null, '', '/');
     setIsRecipientFromLink(false);
+    setSharedCardError(null);
     setCard((prev) => ({
       ...prev,
       recipientName: prev.senderSignoff.split('\n').pop()?.trim() || 'Sevgili Dostum,',
@@ -83,6 +102,41 @@ export default function App() {
     setMode('studio');
     setStageView('back');
   };
+
+  if (loadingSharedCard) {
+    return (
+      <div className="shared-status-screen">
+        <div className="shared-status-card">
+          <span className="status-envelope-icon">✉</span>
+          <h2>Mektubun hazırlanıyor...</h2>
+          <p>Zarfın masaya bırakılıyor, birkaç saniye içinde açılacak.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (sharedCardError) {
+    return (
+      <div className="shared-status-screen">
+        <div className="shared-status-card">
+          <span className="status-envelope-icon">✉</span>
+          <h2>Kartpostal bulunamadı</h2>
+          <p>{sharedCardError}</p>
+          <button
+            type="button"
+            className="pill-btn primary"
+            onClick={() => {
+              window.history.replaceState(null, '', '/');
+              setSharedCardError(null);
+              setMode('studio');
+            }}
+          >
+            Yeni Kartpostal Hazırla
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (mode === 'recipient') {
     return (

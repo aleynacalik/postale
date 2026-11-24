@@ -2037,3 +2037,118 @@ textarea {
     border-top: 1px solid var(--border-subtle);
   }
 }
+
+/* ================================
+   SHORT LINK & DIRECT EMAIL UI
+   ================================ */
+.label-badge-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+.status-pill.neutral {
+  background: rgba(36, 29, 28, 0.08);
+  color: var(--text-muted);
+}
+
+.status-pill.success {
+  background: rgba(34, 139, 86, 0.14);
+  color: #1a6d43;
+}
+
+.send-feedback {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.send-feedback.success {
+  background: rgba(34, 139, 86, 0.12);
+  color: #17613c;
+  border: 1px solid rgba(34, 139, 86, 0.28);
+}
+
+.send-feedback.error {
+  background: rgba(185, 42, 62, 0.09);
+  color: #8f1d2e;
+  border: 1px solid rgba(185, 42, 62, 0.24);
+}
+
+.pill-btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.spin {
+  animation: spinAnim 0.9s linear infinite;
+}
+
+@keyframes spinAnim {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.shared-status-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: radial-gradient(circle at 30% 20%, #f8ecec 0%, #ede0e0 100%);
+}
+
+.shared-status-card {
+  max-width: 420px;
+  width: 100%;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 36px 28px;
+  text-align: center;
+  box-shadow: 0 22px 54px rgba(20, 12, 14, 0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.status-envelope-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: #241d1c;
+  color: #faf6f0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.shared-status-card h2 {
+  margin: 4px 0 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 22px;
+}
+
+.shared-status-card p {
+  margin: 0 0 8px;
+  font-size: 13.5px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
