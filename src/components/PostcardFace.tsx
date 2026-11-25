@@ -2,10 +2,15 @@ import React from 'react';
 import { PostcardData } from '../types';
 import { DoodleOverlay, PhotoArtwork } from './Artwork';
 import { PostageStamp } from './PostageStamp';
+import { StickerLayer } from './StickerLayer';
 
 interface PostcardFaceProps {
   card: PostcardData;
   showClippedStamp?: boolean;
+  editableStickers?: boolean;
+  selectedStickerId?: string | null;
+  onSelectSticker?: (id: string | null) => void;
+  onMoveSticker?: (id: string, x: number, y: number) => void;
 }
 
 const FONT_CLASS_MAP: Record<PostcardData['handwritingFont'], string> = {
@@ -15,7 +20,14 @@ const FONT_CLASS_MAP: Record<PostcardData['handwritingFont'], string> = {
   cormorant: 'hw-cormorant',
 };
 
-export const PostcardFront: React.FC<PostcardFaceProps> = ({ card, showClippedStamp = true }) => {
+export const PostcardFront: React.FC<PostcardFaceProps> = ({
+  card,
+  showClippedStamp = true,
+  editableStickers = false,
+  selectedStickerId = null,
+  onSelectSticker,
+  onMoveSticker,
+}) => {
   const filterClass = `photo-filter-${card.photoFilter}`;
   const imgStyle: React.CSSProperties = {
     transform: `scale(${card.photoZoom})`,
@@ -87,6 +99,14 @@ export const PostcardFront: React.FC<PostcardFaceProps> = ({ card, showClippedSt
         )}
 
         <DoodleOverlay doodles={card.doodles} color={card.cardInkColor} />
+        <StickerLayer
+          stickers={card.placedStickers || []}
+          side="front"
+          editable={editableStickers}
+          selectedStickerId={selectedStickerId}
+          onSelectSticker={onSelectSticker}
+          onMoveSticker={onMoveSticker}
+        />
       </div>
     );
   }
@@ -139,11 +159,25 @@ export const PostcardFront: React.FC<PostcardFaceProps> = ({ card, showClippedSt
         style={{ opacity: card.paperGrain * 0.55 }}
       />
       <DoodleOverlay doodles={card.doodles} color={card.cardInkColor} />
+      <StickerLayer
+        stickers={card.placedStickers || []}
+        side="front"
+        editable={editableStickers}
+        selectedStickerId={selectedStickerId}
+        onSelectSticker={onSelectSticker}
+        onMoveSticker={onMoveSticker}
+      />
     </div>
   );
 };
 
-export const PostcardBack: React.FC<{ card: PostcardData }> = ({ card }) => {
+export const PostcardBack: React.FC<PostcardFaceProps> = ({
+  card,
+  editableStickers = false,
+  selectedStickerId = null,
+  onSelectSticker,
+  onMoveSticker,
+}) => {
   const hwClass = FONT_CLASS_MAP[card.handwritingFont] || 'hw-caveat';
 
   return (
@@ -183,7 +217,7 @@ export const PostcardBack: React.FC<{ card: PostcardData }> = ({ card }) => {
 
           <div className="back-vertical-divider" />
 
-          {/* Right column: address lines + signoff */}
+          {/* Right column: address lines + signoff / drawn signature */}
           <div className="back-address-col">
             <div className="address-lines">
               <div className={`address-line ${hwClass}`}>{card.recipientName}</div>
@@ -192,18 +226,43 @@ export const PostcardBack: React.FC<{ card: PostcardData }> = ({ card }) => {
               <div className="address-line" />
             </div>
 
-            <div className={`back-signoff ${hwClass}`}>{card.senderSignoff}</div>
+            <div className="back-signoff-area">
+              {card.signatureSvg ? (
+                <svg
+                  viewBox="0 0 300 110"
+                  className="drawn-signature-svg"
+                  aria-label="Gönderenin imzası"
+                >
+                  <path
+                    d={card.signatureSvg}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              ) : (
+                <div className={`back-signoff ${hwClass}`}>{card.senderSignoff}</div>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="back-footer-credit">
-          DESIGNED WITH POSTALE STUDIO
-        </div>
+        <div className="back-footer-credit">DESIGNED WITH POSTALE STUDIO</div>
       </div>
 
       <div
         className="paper-grain-overlay"
         style={{ opacity: card.paperGrain * 0.52 }}
+      />
+      <StickerLayer
+        stickers={card.placedStickers || []}
+        side="back"
+        editable={editableStickers}
+        selectedStickerId={selectedStickerId}
+        onSelectSticker={onSelectSticker}
+        onMoveSticker={onMoveSticker}
       />
     </div>
   );
@@ -214,11 +273,30 @@ export const FlippablePostcard: React.FC<{
   isFlipped: boolean;
   onFlip: () => void;
   showClippedStamp?: boolean;
-}> = ({ card, isFlipped, onFlip, showClippedStamp = true }) => {
+  editableStickers?: boolean;
+  selectedStickerId?: string | null;
+  onSelectSticker?: (id: string | null) => void;
+  onMoveSticker?: (id: string, x: number, y: number) => void;
+}> = ({
+  card,
+  isFlipped,
+  onFlip,
+  showClippedStamp = true,
+  editableStickers = false,
+  selectedStickerId = null,
+  onSelectSticker,
+  onMoveSticker,
+}) => {
   return (
     <div
       className={`flip-card-scene ${isFlipped ? 'is-flipped' : ''}`}
-      onClick={onFlip}
+      onClick={() => {
+        if (editableStickers && selectedStickerId) {
+          onSelectSticker?.(null);
+          return;
+        }
+        onFlip();
+      }}
       role="button"
       tabIndex={0}
       aria-label={isFlipped ? 'Kartpostalın ön yüzünü çevir' : 'Kartpostalın arka yüzünü çevir'}
@@ -231,10 +309,23 @@ export const FlippablePostcard: React.FC<{
     >
       <div className="flip-card-inner">
         <div className="flip-card-face flip-card-front" aria-hidden={isFlipped}>
-          <PostcardFront card={card} showClippedStamp={showClippedStamp} />
+          <PostcardFront
+            card={card}
+            showClippedStamp={showClippedStamp}
+            editableStickers={editableStickers}
+            selectedStickerId={selectedStickerId}
+            onSelectSticker={onSelectSticker}
+            onMoveSticker={onMoveSticker}
+          />
         </div>
         <div className="flip-card-face flip-card-back" aria-hidden={!isFlipped}>
-          <PostcardBack card={card} />
+          <PostcardBack
+            card={card}
+            editableStickers={editableStickers}
+            selectedStickerId={selectedStickerId}
+            onSelectSticker={onSelectSticker}
+            onMoveSticker={onMoveSticker}
+          />
         </div>
       </div>
     </div>

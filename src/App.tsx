@@ -2,20 +2,24 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   Eye,
   Mail,
+  Minus,
+  Plus,
   RotateCcw,
   RotateCw,
   Send,
   Sparkles,
   Square,
   FileText,
+  Trash2,
 } from 'lucide-react';
 import { InteractiveEnvelope } from './components/InteractiveEnvelope';
 import { FlippablePostcard } from './components/PostcardFace';
 import { RecipientView } from './components/RecipientView';
 import { SendModal } from './components/SendModal';
+import { STICKER_CATALOG } from './components/StickerLayer';
 import { StudioSidebar } from './components/StudioSidebar';
 import { DEFAULT_POSTCARD } from './data/presets';
-import { PostcardData, TemplatePreset } from './types';
+import { PlacedSticker, PostcardData, StickerKind, TemplatePreset } from './types';
 import { extractShortCardIdFromUrl, fetchCardFromServer } from './utils/api';
 import { playCardFlip } from './utils/audio';
 import { clearDraft, decodePostcardFromHash, loadDraft, saveDraft } from './utils/share';
@@ -32,6 +36,7 @@ export default function App() {
   const [envelopeClosedInStudio, setEnvelopeClosedInStudio] = useState(false);
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [selectedStickerId, setSelectedStickerId] = useState<string | null>(null);
   const resetTimerRef = useRef<number | null>(null);
 
   const [card, setCard] = useState<PostcardData>(() => {
@@ -89,7 +94,74 @@ export default function App() {
       ...preset.data,
       customPhoto: prev.customPhoto,
       customStamp: prev.customStamp,
+      placedStickers: prev.placedStickers,
+      signatureSvg: prev.signatureSvg,
+      spotifyUrl: prev.spotifyUrl,
+      voiceNote: prev.voiceNote,
+      unlockAt: prev.unlockAt,
+      unlockNote: prev.unlockNote,
     }));
+  };
+
+  const handleAddSticker = (kind: StickerKind) => {
+    const targetSide: 'front' | 'back' = stageView === 'back' ? 'back' : 'front';
+    if (stageView === 'envelope') {
+      setStageView('front');
+    }
+    const catalogItem = STICKER_CATALOG.find((c) => c.kind === kind);
+    const id = `stk_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+    const existingCount = (card.placedStickers || []).filter((s) => s.side === targetSide).length;
+    const offset = (existingCount % 5) * 6;
+    const newSticker: PlacedSticker = {
+      id,
+      kind,
+      side: targetSide,
+      x: Math.min(82, 24 + offset),
+      y: Math.min(80, 24 + offset),
+      rotation: catalogItem?.defaultRotation ?? 0,
+      scale: 1,
+    };
+    setCard((prev) => ({
+      ...prev,
+      placedStickers: [...(prev.placedStickers || []), newSticker],
+    }));
+    setSelectedStickerId(id);
+  };
+
+  const handleMoveSticker = (id: string, x: number, y: number) => {
+    setCard((prev) => ({
+      ...prev,
+      placedStickers: (prev.placedStickers || []).map((s) =>
+        s.id === id ? { ...s, x, y } : s
+      ),
+    }));
+  };
+
+  const handleAdjustSelectedSticker = (delta: { rotation?: number; scale?: number }) => {
+    if (!selectedStickerId) return;
+    setCard((prev) => ({
+      ...prev,
+      placedStickers: (prev.placedStickers || []).map((s) => {
+        if (s.id !== selectedStickerId) return s;
+        return {
+          ...s,
+          rotation: delta.rotation !== undefined ? s.rotation + delta.rotation : s.rotation,
+          scale:
+            delta.scale !== undefined
+              ? Math.min(1.8, Math.max(0.55, Math.round((s.scale + delta.scale) * 100) / 100))
+              : s.scale,
+        };
+      }),
+    }));
+  };
+
+  const handleDeleteSelectedSticker = () => {
+    if (!selectedStickerId) return;
+    setCard((prev) => ({
+      ...prev,
+      placedStickers: (prev.placedStickers || []).filter((s) => s.id !== selectedStickerId),
+    }));
+    setSelectedStickerId(null);
   };
 
   const handleResetDesign = () => {
@@ -103,6 +175,7 @@ export default function App() {
     }
     if (resetTimerRef.current) window.clearTimeout(resetTimerRef.current);
     setConfirmReset(false);
+    setSelectedStickerId(null);
     clearDraft();
     setCard({ ...DEFAULT_POSTCARD });
     setStageView('envelope');
@@ -118,10 +191,22 @@ export default function App() {
       recipientName: prev.senderSignoff.split('\n').pop()?.trim() || 'Sevgili Dostum,',
       message: 'Mektubunu aldım, çok mutlu oldum!\n\n',
       senderSignoff: 'sevgilerle,\n',
+      signatureSvg: null,
+      voiceNote: null,
+      spotifyUrl: '',
+      unlockAt: null,
+      unlockNote: '',
     }));
     setMode('studio');
     setStageView('back');
   };
+
+  const selectedSticker =
+    selectedStickerId && stageView !== 'envelope'
+      ? (card.placedStickers || []).find(
+          (s) => s.id === selectedStickerId && s.side === stageView
+        )
+      : null;
 
   if (loadingSharedCard) {
     return (
@@ -186,7 +271,10 @@ export default function App() {
           <button
             type="button"
             className={`switch-btn ${stageView === 'envelope' ? 'active' : ''}`}
-            onClick={() => setStageView('envelope')}
+            onClick={() => {
+              setSelectedStickerId(null);
+              setStageView('envelope');
+            }}
           >
             <Mail size={14} />
             <span>Zarf</span>
@@ -194,7 +282,10 @@ export default function App() {
           <button
             type="button"
             className={`switch-btn ${stageView === 'front' ? 'active' : ''}`}
-            onClick={() => setStageView('front')}
+            onClick={() => {
+              setSelectedStickerId(null);
+              setStageView('front');
+            }}
           >
             <Square size={14} />
             <span>Ön Yüz</span>
@@ -202,7 +293,10 @@ export default function App() {
           <button
             type="button"
             className={`switch-btn ${stageView === 'back' ? 'active' : ''}`}
-            onClick={() => setStageView('back')}
+            onClick={() => {
+              setSelectedStickerId(null);
+              setStageView('back');
+            }}
           >
             <FileText size={14} />
             <span>Arka Yüz</span>
@@ -224,6 +318,7 @@ export default function App() {
             type="button"
             className="pill-btn ghost"
             onClick={() => {
+              setSelectedStickerId(null);
               setIsRecipientFromLink(false);
               setMode('recipient');
             }}
@@ -284,24 +379,83 @@ export default function App() {
                 <FlippablePostcard
                   card={card}
                   isFlipped={stageView === 'back'}
+                  editableStickers
+                  selectedStickerId={selectedStickerId}
+                  onSelectSticker={setSelectedStickerId}
+                  onMoveSticker={handleMoveSticker}
                   onFlip={() => {
                     if (card.soundEnabled) playCardFlip();
+                    setSelectedStickerId(null);
                     setStageView((prev) => (prev === 'front' ? 'back' : 'front'));
                   }}
                 />
-                <div className="stage-caption-row">
-                  <button
-                    type="button"
-                    className="pill-btn ghost small"
-                    onClick={() => {
-                      if (card.soundEnabled) playCardFlip();
-                      setStageView((prev) => (prev === 'front' ? 'back' : 'front'));
-                    }}
-                  >
-                    <RotateCw size={13} />
-                    <span>{stageView === 'front' ? 'Arka Yüzü Çevir' : 'Ön Yüzü Çevir'}</span>
-                  </button>
-                </div>
+
+                {selectedSticker ? (
+                  <div className="sticker-floating-toolbar">
+                    <span className="toolbar-hint">Sürükle veya ayarla:</span>
+                    <button
+                      type="button"
+                      className="icon-pill-btn"
+                      title="Sola döndür"
+                      onClick={() => handleAdjustSelectedSticker({ rotation: -12 })}
+                    >
+                      <RotateCcw size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-pill-btn"
+                      title="Sağa döndür"
+                      onClick={() => handleAdjustSelectedSticker({ rotation: 12 })}
+                    >
+                      <RotateCw size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-pill-btn"
+                      title="Küçült"
+                      onClick={() => handleAdjustSelectedSticker({ scale: -0.15 })}
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-pill-btn"
+                      title="Büyüt"
+                      onClick={() => handleAdjustSelectedSticker({ scale: 0.15 })}
+                    >
+                      <Plus size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-pill-btn danger"
+                      title="Stickerı sil"
+                      onClick={handleDeleteSelectedSticker}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      className="pill-btn primary small"
+                      onClick={() => setSelectedStickerId(null)}
+                    >
+                      Tamam
+                    </button>
+                  </div>
+                ) : (
+                  <div className="stage-caption-row">
+                    <button
+                      type="button"
+                      className="pill-btn ghost small"
+                      onClick={() => {
+                        if (card.soundEnabled) playCardFlip();
+                        setStageView((prev) => (prev === 'front' ? 'back' : 'front'));
+                      }}
+                    >
+                      <RotateCw size={13} />
+                      <span>{stageView === 'front' ? 'Arka Yüzü Çevir' : 'Ön Yüzü Çevir'}</span>
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -310,9 +464,18 @@ export default function App() {
         {/* Right Editor Sidebar */}
         <StudioSidebar
           card={card}
+          stageView={stageView}
           onChange={handlePatchCard}
           onApplyPreset={handleApplyPreset}
-          onSwitchStageView={(view) => setStageView(view)}
+          onSwitchStageView={(view) => {
+            setSelectedStickerId(null);
+            setStageView(view);
+          }}
+          onAddSticker={handleAddSticker}
+          onClearStickers={() => {
+            setSelectedStickerId(null);
+            handlePatchCard({ placedStickers: [] });
+          }}
         />
       </div>
 

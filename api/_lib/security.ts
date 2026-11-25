@@ -193,6 +193,7 @@ export interface ServerCardPreview {
   envelopeMotto?: string;
   waxSealColor?: string;
   waxSealInitial?: string;
+  unlockAt?: string | null;
 }
 
 export function renderSafeEmailHtml(
@@ -210,6 +211,21 @@ export function renderSafeEmailHtml(
   const safeSubtag = escapeHtml(String(card.envelopeSubtag || '[ÖZEL POSTA]').slice(0, 50));
   const safeInitial = escapeHtml(String(card.waxSealInitial || '✉').slice(0, 3));
   const safeUrl = escapeHtml(shareUrl);
+
+  let capsuleBanner = '';
+  if (card.unlockAt) {
+    const unlockDate = new Date(card.unlockAt);
+    if (!Number.isNaN(unlockDate.getTime()) && unlockDate.getTime() > Date.now()) {
+      const formatted = new Intl.DateTimeFormat('tr-TR', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(unlockDate);
+      capsuleBanner = `<p style="margin:14px 0 0 0;display:inline-block;padding:6px 14px;border-radius:999px;background-color:rgba(158,63,82,0.12);color:#8C2D42;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:12px;font-weight:600;">⏳ Zaman Kapsülü • ${escapeHtml(formatted)} tarihinde açılır</p>`;
+    }
+  }
 
   const envelopeColor = safeHexColor(card.envelopeColor, '#E8C5CC');
   const envelopeTextColor = safeHexColor(card.envelopeTextColor, '#3A262B');
@@ -243,6 +259,7 @@ export function renderSafeEmailHtml(
               <p style="margin:12px 0 0 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;line-height:1.6;color:${textMuted};">
                 ${safeIntro}
               </p>
+              ${capsuleBanner}
             </td>
           </tr>
           <tr>
