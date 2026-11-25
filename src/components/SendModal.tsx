@@ -55,6 +55,8 @@ export const SendModal: React.FC<SendModalProps> = ({
   // Automatically save to Supabase and get a crisp short link (/m/abc1234) when available
   useEffect(() => {
     let active = true;
+    setShortUrl(null);
+    setCardId(null);
     setCreatingShortLink(true);
     saveCardToServer(card).then((res) => {
       if (!active) return;
@@ -215,8 +217,18 @@ export const SendModal: React.FC<SendModalProps> = ({
                 Bu link açıldığında alıcı önce mühürlü zarfını görür, tıklayınca kartpostal içinden çıkar.
               </p>
               <div className="copy-link-row">
-                <input type="text" readOnly value={activeShareUrl} className="text-input mono" />
-                <button type="button" className="pill-btn primary small" onClick={handleCopyLink}>
+                <input
+                  type="text"
+                  readOnly
+                  value={creatingShortLink ? 'Kısa link oluşturuluyor...' : activeShareUrl}
+                  className="text-input mono"
+                />
+                <button
+                  type="button"
+                  className="pill-btn primary small"
+                  onClick={handleCopyLink}
+                  disabled={creatingShortLink}
+                >
                   {copiedLink ? <Check size={14} /> : <Copy size={14} />}
                   <span>{copiedLink ? 'Kopyalandı' : 'Kopyala'}</span>
                 </button>

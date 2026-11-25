@@ -23,3 +23,8 @@ create index if not exists idx_email_logs_recipient_created on public.email_logs
 create index if not exists idx_email_logs_created on public.email_logs (created_at desc);
 
 alter table public.email_logs enable row level security;
+
+grant usage on schema public to service_role;
+grant all privileges on table public.cards to service_role;
+grant all privileges on table public.email_logs to service_role;
+grant usage, select on all sequences in schema public to service_role;

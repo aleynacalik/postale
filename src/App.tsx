@@ -18,11 +18,17 @@ import { RecipientView } from './components/RecipientView';
 import { SendModal } from './components/SendModal';
 import { STICKER_CATALOG } from './components/StickerLayer';
 import { StudioSidebar } from './components/StudioSidebar';
-import { DEFAULT_POSTCARD } from './data/presets';
+import { DEFAULT_POSTCARD, TEMPLATE_PRESETS } from './data/presets';
 import { PlacedSticker, PostcardData, StickerKind, TemplatePreset } from './types';
 import { extractShortCardIdFromUrl, fetchCardFromServer } from './utils/api';
 import { playCardFlip } from './utils/audio';
-import { clearDraft, decodePostcardFromHash, loadDraft, saveDraft } from './utils/share';
+import {
+  clearCardFromBrowserUrl,
+  clearDraft,
+  decodePostcardFromHash,
+  loadDraft,
+  saveDraft,
+} from './utils/share';
 
 type AppMode = 'studio' | 'recipient';
 type StageView = 'envelope' | 'front' | 'back';
@@ -177,26 +183,29 @@ export default function App() {
     setConfirmReset(false);
     setSelectedStickerId(null);
     clearDraft();
+    clearCardFromBrowserUrl();
     setCard({ ...DEFAULT_POSTCARD });
     setStageView('envelope');
     setEnvelopeClosedInStudio(false);
   };
 
   const handleReplyFromRecipient = () => {
-    window.history.replaceState(null, '', '/');
+    clearCardFromBrowserUrl();
     setIsRecipientFromLink(false);
     setSharedCardError(null);
-    setCard((prev) => ({
-      ...prev,
-      recipientName: prev.senderSignoff.split('\n').pop()?.trim() || 'Sevgili Dostum,',
-      message: 'Mektubunu aldım, çok mutlu oldum!\n\n',
-      senderSignoff: 'sevgilerle,\n',
-      signatureSvg: null,
-      voiceNote: null,
-      spotifyUrl: '',
-      unlockAt: null,
-      unlockNote: '',
-    }));
+    setCard((prev) => {
+      const basePreset =
+        TEMPLATE_PRESETS.find((p) => p.id === prev.theme)?.data || DEFAULT_POSTCARD;
+      const previousSender = prev.senderSignoff.split('\n').pop()?.trim();
+      return {
+        ...basePreset,
+        recipientName: previousSender ? `Sevgili ${previousSender},` : 'Sevgili Dostum,',
+        recipientAddress1: '',
+        recipientAddress2: '',
+        message: 'Mektubunu aldım, çok mutlu oldum!\n\n',
+        senderSignoff: 'sevgilerle,\n',
+      };
+    });
     setMode('studio');
     setStageView('back');
   };
@@ -248,7 +257,10 @@ export default function App() {
       <RecipientView
         card={card}
         isPreview={!isRecipientFromLink}
-        onBackToStudio={() => setMode('studio')}
+        onBackToStudio={() => {
+          clearCardFromBrowserUrl();
+          setMode('studio');
+        }}
         onReply={handleReplyFromRecipient}
       />
     );

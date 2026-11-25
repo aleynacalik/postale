@@ -32,6 +32,7 @@ export async function saveCardToServer(card: PostcardData): Promise<SaveCardResu
   try {
     const res = await fetch('/api/cards', {
       method: 'POST',
+      cache: 'no-store',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ card }),
     });
@@ -69,7 +70,9 @@ export async function fetchCardFromServer(id: string): Promise<{
   error?: string;
 }> {
   try {
-    const res = await fetch(`/api/cards?id=${encodeURIComponent(id)}`);
+    const res = await fetch(`/api/cards?id=${encodeURIComponent(id)}`, {
+      cache: 'no-store',
+    });
     const contentType = res.headers.get('content-type') || '';
     if (!contentType.includes('application/json')) {
       return { ok: false, error: 'Kartpostal servisine ulaşılamadı.' };

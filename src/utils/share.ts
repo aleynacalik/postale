@@ -40,8 +40,20 @@ export function decodePostcardFromHash(hash: string): PostcardData | null {
   }
 }
 
+export function getCleanAppPath(): string {
+  const cleaned = window.location.pathname.replace(/\/m\/[^/]+\/?$/i, '/');
+  return cleaned || '/';
+}
+
+export function clearCardFromBrowserUrl() {
+  const cleanPath = getCleanAppPath();
+  if (window.location.pathname !== cleanPath || window.location.hash || window.location.search) {
+    window.history.replaceState(null, '', cleanPath);
+  }
+}
+
 export function buildShareUrl(data: PostcardData): string {
-  const base = `${window.location.origin}${window.location.pathname}`;
+  const base = `${window.location.origin}${getCleanAppPath()}`;
   return `${base}${encodePostcardToHash(data)}`;
 }
 
