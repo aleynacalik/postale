@@ -16,6 +16,7 @@ import {
 
 interface EmailRequestBody {
   to?: string;
+  replyTo?: string;
   subject?: string;
   introNote?: string;
   fromName?: string;
@@ -55,6 +56,8 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   }
 
   const to = (body.to || '').trim().toLowerCase();
+  const rawReplyTo = (body.replyTo || '').trim().toLowerCase();
+  const replyTo = rawReplyTo && isValidEmail(rawReplyTo) ? rawReplyTo : undefined;
   const cardId = (body.cardId || '').trim().toLowerCase();
   const fromName = sanitizeHeaderText(body.fromName || 'Postale', 'Postale', 50);
   const subject = sanitizeHeaderText(
@@ -128,6 +131,28 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   const html = renderSafeEmailHtml(storedCard, shareUrl, introNote, fromName);
   const text = `${introNote || 'Sana özel bir dijital kartpostal hazırladım!'}\n\nZarfı açıp mektubu okumak için tıkla:\n${shareUrl}\n\n— Postale ile gönderildi`;
 
+  // Persist optional replyToEmail onto the card so recipient can reply in 1 click
+  if (replyTo) {
+    try {
+      await fetch(`${supabase.url}/rest/v1/cards?id=eq.${encodeURIComponent(cardId)}`, {
+        method: 'PATCH',
+        headers: {
+          ...supabase.headers,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal',
+        },
+        body: JSON.stringify({
+          data: {
+            ...storedCard,
+            replyToEmail: replyTo,
+          },
+        }),
+      });
+    } catch {
+      // Non-blocking
+    }
+  }
+
   // Provider 1: Gmail SMTP
   const gmailUser = process.env.GMAIL_USER?.trim().replace(/^["']|["']$/g, '');
   const gmailPass = process.env.GMAIL_APP_PASSWORD?.replace(/[^a-zA-Z0-9]/g, '');
@@ -147,6 +172,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       const info = await transporter.sendMail({
         from: `"${fromName} (Postale)" <${gmailUser}>`,
         to,
+        ...(replyTo ? { replyTo: `"${fromName}" <${replyTo}>` } : {}),
         subject,
         text,
         html,
@@ -187,6 +213,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
         body: JSON.stringify({
           from: resendFrom,
           to: [to],
+          ...(replyTo ? { reply_to: replyTo } : {}),
           subject,
           html,
           text,

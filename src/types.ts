@@ -121,6 +121,9 @@ export interface PostcardData {
   // Experience
   soundEnabled: boolean;
   ambientMusic: boolean;
+
+  // Optional reply-to email stored when sender enables replies
+  replyToEmail?: string | null;
 }
 
 export interface TemplatePreset {

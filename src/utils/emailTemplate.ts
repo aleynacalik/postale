@@ -26,6 +26,21 @@ export function generateEmailHtml(
   const textMain = card.backdropDark ? '#F5F2EC' : '#2C2324';
   const textMuted = card.backdropDark ? '#A5AAB4' : '#7A6C6E';
 
+  let capsuleBanner = '';
+  if (card.unlockAt) {
+    const unlockDate = new Date(card.unlockAt);
+    if (!Number.isNaN(unlockDate.getTime()) && unlockDate.getTime() > Date.now()) {
+      const formatted = new Intl.DateTimeFormat('tr-TR', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(unlockDate);
+      capsuleBanner = `<p style="margin:14px 0 0 0;display:inline-block;padding:6px 14px;border-radius:999px;background-color:rgba(158,63,82,0.12);color:#8C2D42;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:12px;font-weight:600;">⏳ Zaman Kapsülü • ${escapeHtml(formatted)} tarihinde açılır</p>`;
+    }
+  }
+
   return `<!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -49,6 +64,7 @@ export function generateEmailHtml(
               <p style="margin:12px 0 0 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;line-height:1.6;color:${textMuted};">
                 ${safeIntro}
               </p>
+              ${capsuleBanner}
             </td>
           </tr>
           <tr>

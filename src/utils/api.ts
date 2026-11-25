@@ -98,6 +98,7 @@ export async function fetchCardFromServer(id: string): Promise<{
 
 export async function sendPostcardEmail(payload: {
   to: string;
+  replyTo?: string;
   cardId: string;
   subject: string;
   introNote: string;

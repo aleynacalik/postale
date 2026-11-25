@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { PostcardData } from '../types';
 import { DoodleOverlay, PhotoArtwork } from './Artwork';
 import { PostageStamp } from './PostageStamp';
@@ -287,10 +287,31 @@ export const FlippablePostcard: React.FC<{
   onSelectSticker,
   onMoveSticker,
 }) => {
+  const downPosRef = useRef<{ x: number; y: number } | null>(null);
+  const movedDuringTouchRef = useRef(false);
+
   return (
     <div
       className={`flip-card-scene ${isFlipped ? 'is-flipped' : ''}`}
+      onPointerDown={(e) => {
+        downPosRef.current = { x: e.clientX, y: e.clientY };
+        movedDuringTouchRef.current = false;
+      }}
+      onPointerMove={(e) => {
+        if (!downPosRef.current) return;
+        const dist = Math.hypot(
+          e.clientX - downPosRef.current.x,
+          e.clientY - downPosRef.current.y
+        );
+        if (dist > 8) {
+          movedDuringTouchRef.current = true;
+        }
+      }}
       onClick={() => {
+        if (movedDuringTouchRef.current) {
+          movedDuringTouchRef.current = false;
+          return;
+        }
         if (editableStickers && selectedStickerId) {
           onSelectSticker?.(null);
           return;

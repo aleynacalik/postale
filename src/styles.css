@@ -2775,3 +2775,71 @@ textarea {
     transform: translateX(5px);
   }
 }
+
+/* ================================
+   POLISH: CAPSULE PREVIEW, REPLY-TO & COMPACT MOBILE HEADER
+   ================================ */
+.email-capsule-pill {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(158, 63, 82, 0.12);
+  color: #8c2d42;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.is-disabled-link {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+@media (max-width: 600px) {
+  .studio-header {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+
+  .studio-brand .brand-sub {
+    display: none;
+  }
+
+  .studio-brand h1 {
+    font-size: 17px;
+  }
+
+  .brand-mark {
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+    border-radius: 8px;
+  }
+
+  .stage-switcher {
+    order: 3;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .switch-btn {
+    justify-content: center;
+    padding: 7px 8px;
+    font-size: 12.5px;
+  }
+
+  .studio-actions {
+    gap: 6px;
+    margin-left: auto;
+  }
+
+  .studio-actions .pill-btn {
+    padding: 7px 11px;
+    font-size: 12px;
+    gap: 5px;
+  }
+
+  .studio-actions .pill-btn:first-child:not(.danger-confirm) span {
+    display: none;
+  }
+}

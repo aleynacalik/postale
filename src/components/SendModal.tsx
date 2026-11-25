@@ -13,20 +13,27 @@ import {
 import { PostcardData } from '../types';
 import { saveCardToServer, sendPostcardEmail } from '../utils/api';
 import { buildMailtoUrl, generateEmailHtml } from '../utils/emailTemplate';
+import { formatUnlockDateTr } from '../utils/media';
 import { buildShareUrl } from '../utils/share';
+
+// Cache saved card fingerprints in memory so reopening SendModal without edits reuses the same short link
+const savedCardCache = new Map<string, { id: string; shortUrl: string }>();
 
 interface SendModalProps {
   card: PostcardData;
+  initialRecipientEmail?: string;
   onClose: () => void;
   onPreviewOpen: () => void;
 }
 
 export const SendModal: React.FC<SendModalProps> = ({
   card,
+  initialRecipientEmail = '',
   onClose,
   onPreviewOpen,
 }) => {
-  const [recipientEmail, setRecipientEmail] = useState('');
+  const [recipientEmail, setRecipientEmail] = useState(initialRecipientEmail);
+  const [senderReplyEmail, setSenderReplyEmail] = useState('');
   const [senderName, setSenderName] = useState(() => {
     const lastLine = card.senderSignoff.split('\n').pop()?.trim() || '';
     return lastLine && lastLine !== 'İsmin' ? lastLine : '';
@@ -36,10 +43,13 @@ export const SendModal: React.FC<SendModalProps> = ({
     'Senin için özel bir dijital kartpostal hazırladım. Aşağıdaki zarfa tıklayıp açabilirsin!'
   );
 
-  const [shortUrl, setShortUrl] = useState<string | null>(null);
-  const [cardId, setCardId] = useState<string | null>(null);
+  const cardFingerprint = useMemo(() => JSON.stringify(card), [card]);
+  const cachedEntry = savedCardCache.get(cardFingerprint);
+
+  const [shortUrl, setShortUrl] = useState<string | null>(cachedEntry?.shortUrl || null);
+  const [cardId, setCardId] = useState<string | null>(cachedEntry?.id || null);
   const [honeypot, setHoneypot] = useState('');
-  const [creatingShortLink, setCreatingShortLink] = useState(true);
+  const [creatingShortLink, setCreatingShortLink] = useState(!cachedEntry);
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedHtml, setCopiedHtml] = useState(false);
   const [copiedRichEmail, setCopiedRichEmail] = useState(false);
@@ -53,8 +63,16 @@ export const SendModal: React.FC<SendModalProps> = ({
   const fallbackShareUrl = useMemo(() => buildShareUrl(card), [card]);
   const activeShareUrl = shortUrl || fallbackShareUrl;
 
-  // Automatically save to Supabase and get a crisp short link (/m/abc1234) when available
+  // Automatically save to Supabase (reusing cached short link if card didn't change)
   useEffect(() => {
+    const existing = savedCardCache.get(cardFingerprint);
+    if (existing) {
+      setShortUrl(existing.shortUrl);
+      setCardId(existing.id);
+      setCreatingShortLink(false);
+      return;
+    }
+
     let active = true;
     setShortUrl(null);
     setCardId(null);
@@ -62,6 +80,7 @@ export const SendModal: React.FC<SendModalProps> = ({
     saveCardToServer(card).then((res) => {
       if (!active) return;
       if (res.ok && res.shortUrl && res.id) {
+        savedCardCache.set(cardFingerprint, { id: res.id, shortUrl: res.shortUrl });
         setShortUrl(res.shortUrl);
         setCardId(res.id);
       }
@@ -70,7 +89,7 @@ export const SendModal: React.FC<SendModalProps> = ({
     return () => {
       active = false;
     };
-  }, [card]);
+  }, [card, cardFingerprint]);
 
   const emailHtml = useMemo(
     () => generateEmailHtml(card, activeShareUrl, introNote, senderName),
@@ -81,6 +100,13 @@ export const SendModal: React.FC<SendModalProps> = ({
     () => buildMailtoUrl(recipientEmail, subject, introNote, activeShareUrl),
     [recipientEmail, subject, introNote, activeShareUrl]
   );
+
+  const futureUnlockLabel = useMemo(() => {
+    if (!card.unlockAt) return null;
+    const t = new Date(card.unlockAt).getTime();
+    if (Number.isNaN(t) || t <= Date.now()) return null;
+    return formatUnlockDateTr(card.unlockAt);
+  }, [card.unlockAt]);
 
   const handleCopyLink = async () => {
     try {
@@ -132,6 +158,15 @@ export const SendModal: React.FC<SendModalProps> = ({
       return;
     }
 
+    const cleanReplyTo = senderReplyEmail.trim();
+    if (cleanReplyTo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanReplyTo)) {
+      setSendResult({
+        type: 'error',
+        message: 'Kendi e-posta adresin geçersiz görünüyor (isteğe bağlı, boş da bırakabilirsin).',
+      });
+      return;
+    }
+
     setSendingEmail(true);
     setSendResult(null);
 
@@ -139,6 +174,7 @@ export const SendModal: React.FC<SendModalProps> = ({
     if (!verifiedCardId) {
       const saved = await saveCardToServer(card);
       if (saved.ok && saved.shortUrl && saved.id) {
+        savedCardCache.set(cardFingerprint, { id: saved.id, shortUrl: saved.shortUrl });
         setShortUrl(saved.shortUrl);
         setCardId(saved.id);
         verifiedCardId = saved.id;
@@ -157,6 +193,7 @@ export const SendModal: React.FC<SendModalProps> = ({
 
     const res = await sendPostcardEmail({
       to: cleanTo,
+      replyTo: cleanReplyTo || undefined,
       cardId: verifiedCardId,
       subject,
       introNote,
@@ -241,10 +278,14 @@ export const SendModal: React.FC<SendModalProps> = ({
               )}
               <div className="quick-share-row">
                 <a
-                  href={whatsappUrl}
+                  href={creatingShortLink ? undefined : whatsappUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="pill-btn ghost small"
+                  aria-disabled={creatingShortLink}
+                  className={`pill-btn ghost small ${creatingShortLink ? 'is-disabled-link' : ''}`}
+                  onClick={(e) => {
+                    if (creatingShortLink) e.preventDefault();
+                  }}
                 >
                   <ExternalLink size={14} />
                   <span>WhatsApp ile Gönder</span>
@@ -266,7 +307,13 @@ export const SendModal: React.FC<SendModalProps> = ({
             <div className="modal-divider" />
 
             <div className="modal-section">
-              <label className="field-label">2. Tek Tıkla E-posta Gönder</label>
+              <div className="label-badge-row">
+                <label className="field-label">2. Tek Tıkla E-posta Gönder</label>
+                {initialRecipientEmail && (
+                  <span className="status-pill success">✓ Cevap adresi hazır</span>
+                )}
+              </div>
+
               <div className="form-row-2">
                 <div>
                   <span className="mini-label">Gönderen Adı</span>
@@ -288,6 +335,19 @@ export const SendModal: React.FC<SendModalProps> = ({
                     placeholder="arkadasin@mail.com"
                   />
                 </div>
+              </div>
+
+              <div className="form-field">
+                <span className="mini-label">
+                  Senin E-postan <em>(isteğe bağlı — alıcı sana direkt cevap dönebilsin diye)</em>
+                </span>
+                <input
+                  type="email"
+                  className="text-input"
+                  value={senderReplyEmail}
+                  onChange={(e) => setSenderReplyEmail(e.target.value)}
+                  placeholder="senin@mailin.com"
+                />
               </div>
 
               <div className="form-field">
@@ -390,6 +450,11 @@ export const SendModal: React.FC<SendModalProps> = ({
                 <div>
                   <strong>Kime:</strong> {recipientEmail || 'alici@ornek.com'}
                 </div>
+                {senderReplyEmail.trim() && (
+                  <div>
+                    <strong>Yanıt Adresi:</strong> {senderReplyEmail.trim()}
+                  </div>
+                )}
               </div>
 
               <div
@@ -408,6 +473,12 @@ export const SendModal: React.FC<SendModalProps> = ({
                   <span className="email-kicker">POSTALE • DİJİTAL POSTA</span>
                   <h3>{senderName || 'Bir arkadaşın'} sana bir mektup gönderdi</h3>
                   <p className="email-intro">{introNote}</p>
+
+                  {futureUnlockLabel && (
+                    <span className="email-capsule-pill">
+                      ⏳ Zaman Kapsülü • {futureUnlockLabel} tarihinde açılır
+                    </span>
+                  )}
 
                   {/* Mini clickable envelope inside the email */}
                   <button

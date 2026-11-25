@@ -41,6 +41,7 @@ export default function App() {
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [selectedStickerId, setSelectedStickerId] = useState<string | null>(null);
+  const [replyRecipientEmail, setReplyRecipientEmail] = useState('');
   const resetTimerRef = useRef<number | null>(null);
 
   const [card, setCard] = useState<PostcardData>(() => {
@@ -177,6 +178,7 @@ export default function App() {
     if (resetTimerRef.current) window.clearTimeout(resetTimerRef.current);
     setConfirmReset(false);
     setSelectedStickerId(null);
+    setReplyRecipientEmail('');
     clearDraft();
     clearCardFromBrowserUrl();
     setCard({ ...DEFAULT_POSTCARD });
@@ -188,13 +190,17 @@ export default function App() {
     clearCardFromBrowserUrl();
     setIsRecipientFromLink(false);
     setSharedCardError(null);
+    setReplyRecipientEmail(card.replyToEmail || '');
     setCard((prev) => {
       const basePreset =
         TEMPLATE_PRESETS.find((p) => p.id === prev.theme)?.data || DEFAULT_POSTCARD;
       const previousSender = prev.senderSignoff.split('\n').pop()?.trim();
       return {
         ...basePreset,
-        recipientName: previousSender ? `Sevgili ${previousSender},` : 'Sevgili Dostum,',
+        recipientName:
+          previousSender && previousSender !== 'İsmin'
+            ? `Sevgili ${previousSender},`
+            : 'Sevgili Dostum,',
         recipientAddress1: '',
         recipientAddress2: '',
         message: 'Mektubunu aldım, çok mutlu oldum!\n\n',
@@ -489,6 +495,7 @@ export default function App() {
       {sendModalOpen && (
         <SendModal
           card={card}
+          initialRecipientEmail={replyRecipientEmail}
           onClose={() => setSendModalOpen(false)}
           onPreviewOpen={() => {
             setIsRecipientFromLink(false);
