@@ -1,16 +1,13 @@
 import crypto from 'node:crypto';
-
-interface ApiRequest {
-  method?: string;
-  query?: Record<string, string | string[] | undefined>;
-  body?: unknown;
-}
-
-interface ApiResponse {
-  status: (code: number) => ApiResponse;
-  json: (data: unknown) => void;
-  setHeader: (name: string, value: string) => void;
-}
+import {
+  ApiRequest,
+  ApiResponse,
+  checkMemoryRateLimit,
+  getClientIp,
+  getSupabaseConfig,
+  isAllowedOrigin,
+  sha256,
+} from './_lib/security.js';
 
 const ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
 
@@ -21,18 +18,6 @@ function generateShortId(length = 7): string {
     out += ALPHABET[bytes[i] % ALPHABET.length];
   }
   return out;
-}
-
-function getSupabaseConfig() {
-  const url = process.env.SUPABASE_URL?.replace(/\/+$/, '').trim();
-  const key = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY)?.trim();
-  if (!url || !key) return null;
-  const headers: Record<string, string> = { apikey: key };
-  // Legacy JWT keys (eyJ...) require Authorization: Bearer, while new sb_secret_ keys must ONLY use apikey
-  if (key.split('.').length === 3) {
-    headers.Authorization = `Bearer ${key}`;
-  }
-  return { url, headers };
 }
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
@@ -85,6 +70,18 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
 
   // POST /api/cards
   if (req.method === 'POST') {
+    if (!isAllowedOrigin(req)) {
+      return res.status(403).json({ ok: false, error: 'Yetkisiz istek kaynağı.' });
+    }
+
+    const ipHash = sha256(getClientIp(req));
+    if (!checkMemoryRateLimit(`cards:${ipHash}`, 20, 60 * 60 * 1000)) {
+      return res.status(429).json({
+        ok: false,
+        error: 'Çok fazla kartpostal oluşturdun. Lütfen biraz sonra tekrar dene.',
+      });
+    }
+
     const body =
       typeof req.body === 'string'
         ? (JSON.parse(req.body) as { card?: unknown })
@@ -95,7 +92,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     }
 
     const serialized = JSON.stringify(body.card);
-    if (serialized.length > 2_500_000) {
+    if (serialized.length > 2_000_000) {
       return res.status(413).json({
         ok: false,
         error: 'Kartpostal boyutu çok büyük. Daha küçük bir görsel deneyin.',

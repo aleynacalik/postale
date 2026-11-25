@@ -95,10 +95,11 @@ export async function fetchCardFromServer(id: string): Promise<{
 
 export async function sendPostcardEmail(payload: {
   to: string;
+  cardId: string;
   subject: string;
-  html: string;
-  text: string;
+  introNote: string;
   fromName: string;
+  website?: string;
 }): Promise<SendEmailResult> {
   try {
     const res = await fetch('/api/send-email', {

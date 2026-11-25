@@ -36,6 +36,8 @@ export const SendModal: React.FC<SendModalProps> = ({
   );
 
   const [shortUrl, setShortUrl] = useState<string | null>(null);
+  const [cardId, setCardId] = useState<string | null>(null);
+  const [honeypot, setHoneypot] = useState('');
   const [creatingShortLink, setCreatingShortLink] = useState(true);
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedHtml, setCopiedHtml] = useState(false);
@@ -56,8 +58,9 @@ export const SendModal: React.FC<SendModalProps> = ({
     setCreatingShortLink(true);
     saveCardToServer(card).then((res) => {
       if (!active) return;
-      if (res.ok && res.shortUrl) {
+      if (res.ok && res.shortUrl && res.id) {
         setShortUrl(res.shortUrl);
+        setCardId(res.id);
       }
       setCreatingShortLink(false);
     });
@@ -129,24 +132,33 @@ export const SendModal: React.FC<SendModalProps> = ({
     setSendingEmail(true);
     setSendResult(null);
 
-    let urlToSend = activeShareUrl;
-    if (!shortUrl) {
+    let verifiedCardId = cardId;
+    if (!verifiedCardId) {
       const saved = await saveCardToServer(card);
-      if (saved.ok && saved.shortUrl) {
+      if (saved.ok && saved.shortUrl && saved.id) {
         setShortUrl(saved.shortUrl);
-        urlToSend = saved.shortUrl;
+        setCardId(saved.id);
+        verifiedCardId = saved.id;
       }
     }
 
-    const htmlToSend = generateEmailHtml(card, urlToSend, introNote, senderName);
-    const textToSend = `${introNote}\n\nZarfı açıp mektubu okumak için tıkla:\n${urlToSend}\n\n— Postale ile gönderildi`;
+    if (!verifiedCardId) {
+      setSendingEmail(false);
+      setSendResult({
+        type: 'error',
+        message:
+          'Kartpostal kaydedilemedi. Doğrudan e-posta gönderimi Vercel + Supabase üzerinde çalışır; aşağıdaki “Görsel Maili Kopyala” butonunu kullanabilirsin.',
+      });
+      return;
+    }
 
     const res = await sendPostcardEmail({
       to: cleanTo,
+      cardId: verifiedCardId,
       subject,
-      html: htmlToSend,
-      text: textToSend,
+      introNote,
       fromName: senderName || 'Postale',
+      website: honeypot,
     });
 
     setSendingEmail(false);
@@ -284,6 +296,25 @@ export const SendModal: React.FC<SendModalProps> = ({
                   onChange={(e) => setIntroNote(e.target.value)}
                 />
               </div>
+
+              {/* Hidden honeypot field against automated spam bots */}
+              <input
+                type="text"
+                name="website"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  left: '-9999px',
+                  width: '1px',
+                  height: '1px',
+                  opacity: 0,
+                  pointerEvents: 'none',
+                }}
+              />
 
               {sendResult && (
                 <div className={`send-feedback ${sendResult.type}`}>
