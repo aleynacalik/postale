@@ -27,9 +27,10 @@ export const SendModal: React.FC<SendModalProps> = ({
   onPreviewOpen,
 }) => {
   const [recipientEmail, setRecipientEmail] = useState('');
-  const [senderName, setSenderName] = useState(
-    card.senderSignoff.split('\n').pop()?.trim() || 'Aleyna'
-  );
+  const [senderName, setSenderName] = useState(() => {
+    const lastLine = card.senderSignoff.split('\n').pop()?.trim() || '';
+    return lastLine && lastLine !== 'İsmin' ? lastLine : '';
+  });
   const [subject, setSubject] = useState('Sana interaktif bir kartpostal geldi ✉');
   const [introNote, setIntroNote] = useState(
     'Senin için özel bir dijital kartpostal hazırladım. Aşağıdaki zarfa tıklayıp açabilirsin!'
@@ -274,7 +275,7 @@ export const SendModal: React.FC<SendModalProps> = ({
                     className="text-input"
                     value={senderName}
                     onChange={(e) => setSenderName(e.target.value)}
-                    placeholder="Aleyna"
+                    placeholder="Adın"
                   />
                 </div>
                 <div>

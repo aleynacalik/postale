@@ -26,8 +26,6 @@ import {
   clearCardFromBrowserUrl,
   clearDraft,
   decodePostcardFromHash,
-  loadDraft,
-  saveDraft,
 } from './utils/share';
 
 type AppMode = 'studio' | 'recipient';
@@ -48,8 +46,7 @@ export default function App() {
   const [card, setCard] = useState<PostcardData>(() => {
     const fromHash = decodePostcardFromHash(window.location.hash);
     if (fromHash) return fromHash;
-    const saved = loadDraft();
-    return saved || DEFAULT_POSTCARD;
+    return { ...DEFAULT_POSTCARD };
   });
 
   // Detect short link (/m/abc1234) or hash link (#m=...)
@@ -84,12 +81,10 @@ export default function App() {
     return () => window.removeEventListener('hashchange', checkHash);
   }, []);
 
-  // Auto-save draft when editing in studio
+  // Clear any legacy localStorage draft so opening the site always starts spotless
   useEffect(() => {
-    if (mode === 'studio' && !loadingSharedCard && !sharedCardError) {
-      saveDraft(card);
-    }
-  }, [card, mode, loadingSharedCard, sharedCardError]);
+    clearDraft();
+  }, []);
 
   const handlePatchCard = (patch: Partial<PostcardData>) => {
     setCard((prev) => ({ ...prev, ...patch }));
