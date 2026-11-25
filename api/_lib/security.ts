@@ -68,9 +68,16 @@ export function checkMemoryRateLimit(key: string, limit: number, windowMs: numbe
 }
 
 export function getSupabaseConfig() {
-  const url = process.env.SUPABASE_URL?.replace(/\/+$/, '').trim();
+  const rawUrl = process.env.SUPABASE_URL?.trim();
   const key = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY)?.trim();
-  if (!url || !key) return null;
+  if (!rawUrl || !key) return null;
+  let url: string;
+  try {
+    // Normalize to pure origin (handles both https://xxx.supabase.co and https://xxx.supabase.co/rest/v1)
+    url = new URL(rawUrl).origin;
+  } catch {
+    return null;
+  }
   const headers: Record<string, string> = { apikey: key };
   if (key.split('.').length === 3) {
     headers.Authorization = `Bearer ${key}`;
