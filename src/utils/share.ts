@@ -65,3 +65,11 @@ export function loadDraft(): PostcardData | null {
     return null;
   }
 }
+
+export function clearDraft() {
+  try {
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+  } catch {
+    // Ignore storage errors
+  }
+}

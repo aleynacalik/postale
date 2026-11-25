@@ -205,6 +205,16 @@ textarea {
   border-color: rgba(36, 29, 28, 0.24);
 }
 
+.pill-btn.ghost.danger-confirm {
+  background: rgba(185, 42, 62, 0.1);
+  color: #9e1c2f;
+  border-color: rgba(185, 42, 62, 0.35);
+}
+
+.pill-btn.ghost.danger-confirm:hover {
+  background: rgba(185, 42, 62, 0.16);
+}
+
 .theme-dark .pill-btn.ghost {
   background: rgba(255, 255, 255, 0.1);
   color: #f4f1ea;

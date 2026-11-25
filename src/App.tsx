@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Eye,
   Mail,
+  RotateCcw,
   RotateCw,
   Send,
   Sparkles,
@@ -17,7 +18,7 @@ import { DEFAULT_POSTCARD } from './data/presets';
 import { PostcardData, TemplatePreset } from './types';
 import { extractShortCardIdFromUrl, fetchCardFromServer } from './utils/api';
 import { playCardFlip } from './utils/audio';
-import { decodePostcardFromHash, loadDraft, saveDraft } from './utils/share';
+import { clearDraft, decodePostcardFromHash, loadDraft, saveDraft } from './utils/share';
 
 type AppMode = 'studio' | 'recipient';
 type StageView = 'envelope' | 'front' | 'back';
@@ -30,6 +31,8 @@ export default function App() {
   const [stageView, setStageView] = useState<StageView>('envelope');
   const [envelopeClosedInStudio, setEnvelopeClosedInStudio] = useState(false);
   const [sendModalOpen, setSendModalOpen] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const resetTimerRef = useRef<number | null>(null);
 
   const [card, setCard] = useState<PostcardData>(() => {
     const fromHash = decodePostcardFromHash(window.location.hash);
@@ -87,6 +90,23 @@ export default function App() {
       customPhoto: prev.customPhoto,
       customStamp: prev.customStamp,
     }));
+  };
+
+  const handleResetDesign = () => {
+    if (!confirmReset) {
+      setConfirmReset(true);
+      if (resetTimerRef.current) window.clearTimeout(resetTimerRef.current);
+      resetTimerRef.current = window.setTimeout(() => {
+        setConfirmReset(false);
+      }, 3500);
+      return;
+    }
+    if (resetTimerRef.current) window.clearTimeout(resetTimerRef.current);
+    setConfirmReset(false);
+    clearDraft();
+    setCard({ ...DEFAULT_POSTCARD });
+    setStageView('envelope');
+    setEnvelopeClosedInStudio(false);
   };
 
   const handleReplyFromRecipient = () => {
@@ -191,6 +211,15 @@ export default function App() {
 
         {/* Right Actions */}
         <div className="studio-actions">
+          <button
+            type="button"
+            className={`pill-btn ghost ${confirmReset ? 'danger-confirm' : ''}`}
+            onClick={handleResetDesign}
+            title="Tüm değişiklikleri ve yüklenen görselleri sıfırla"
+          >
+            <RotateCcw size={14} />
+            <span>{confirmReset ? 'Emin misin? Tıkla' : 'Sıfırla'}</span>
+          </button>
           <button
             type="button"
             className="pill-btn ghost"
