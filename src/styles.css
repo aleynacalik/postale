@@ -834,12 +834,45 @@ textarea {
   position: relative;
   width: 100%;
   height: 100%;
-  border-radius: 16px;
+  container-type: inline-size;
+  border-radius: 2.6cqw;
   overflow: hidden;
   box-shadow:
     0 24px 54px rgba(15, 12, 13, 0.22),
     0 4px 12px rgba(15, 12, 13, 0.1);
   user-select: none;
+}
+
+/* Proportional stamps inside any postcard (desktop, mobile & inside envelope) */
+.postcard-surface .postage-stamp-sm {
+  width: 10.6cqw;
+  height: 12.6cqw;
+}
+
+.postcard-surface .postage-stamp-md {
+  width: 13.8cqw;
+  height: 16.4cqw;
+}
+
+.postcard-surface .postage-stamp-lg {
+  width: 16.5cqw;
+  height: 19.8cqw;
+}
+
+.postcard-surface .postage-stamp-body {
+  padding: 0.95cqw;
+}
+
+.postcard-surface .bread-clip {
+  top: -2.8cqw;
+  left: -1.7cqw;
+  width: 5.6cqw;
+  height: 4.6cqw;
+}
+
+.postcard-surface .postmark-overlay {
+  width: 27cqw;
+  height: 14.4cqw;
 }
 
 .paper-grain-overlay {
@@ -853,15 +886,15 @@ textarea {
 
 /* --- Framed Postcard Front (Reference 2: Blush California / Arch / Classic) --- */
 .postcard-framed {
-  padding: 12px;
+  padding: 2cqw;
 }
 
 .postcard-inner-frame {
   position: relative;
   width: 100%;
   height: 100%;
-  border-radius: 10px;
-  padding: 18px 24px 14px;
+  border-radius: 1.6cqw;
+  padding: 3cqw 4cqw 2.3cqw;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -870,13 +903,17 @@ textarea {
 }
 
 .front-top-subtitle {
-  font-size: clamp(9px, 1.35vw, 12px);
+  font-size: 1.95cqw;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.92);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.14);
   z-index: 3;
+  max-width: 92%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .front-photo-window {
@@ -895,13 +932,13 @@ textarea {
 .window-arch-frame {
   width: 72%;
   height: 72%;
-  border-radius: 160px 160px 10px 10px;
+  border-radius: 26cqw 26cqw 1.6cqw 1.6cqw;
 }
 
 .window-classic-border {
   width: 94%;
   height: 76%;
-  border-radius: 6px;
+  border-radius: 1cqw;
 }
 
 .front-photo-media {
@@ -942,28 +979,30 @@ textarea {
   left: 50%;
   transform: translate(-50%, -48%) rotate(-6deg);
   font-family: 'Yellowtail', 'Great Vibes', cursive;
-  font-size: clamp(46px, 9.2vw, 94px);
+  font-size: 14.5cqw;
   line-height: 0.95;
   white-space: nowrap;
+  max-width: 94%;
+  text-align: center;
   z-index: 5;
-  text-shadow: 0 5px 16px rgba(20, 12, 14, 0.34);
+  text-shadow: 0 0.8cqw 2.4cqw rgba(20, 12, 14, 0.34);
   pointer-events: none;
 }
 
 .front-script-title.has-outline {
-  -webkit-text-stroke: 2.6px #23191b;
+  -webkit-text-stroke: 0.42cqw #23191b;
   paint-order: stroke fill;
   text-shadow:
-    3px 4px 0 #23191b,
-    0 10px 24px rgba(20, 12, 14, 0.32);
+    0.48cqw 0.65cqw 0 #23191b,
+    0 1.6cqw 3.8cqw rgba(20, 12, 14, 0.32);
 }
 
 .front-bottom-meta {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: clamp(9px, 1.3vw, 11.5px);
+  gap: 2cqw;
+  font-size: 1.85cqw;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.92);
@@ -986,8 +1025,8 @@ textarea {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 18px 26px;
-  border-radius: 4px;
+  padding: 3cqw 4.2cqw;
+  border-radius: 0.7cqw;
 }
 
 .editorial-repeat-bar {
@@ -995,7 +1034,7 @@ textarea {
   align-items: center;
   justify-content: space-between;
   font-family: 'Sacramento', 'Great Vibes', cursive;
-  font-size: clamp(16px, 2.2vw, 22px);
+  font-size: 3.4cqw;
   color: rgba(20, 22, 26, 0.85);
   letter-spacing: 0.02em;
   overflow: hidden;
@@ -1004,7 +1043,7 @@ textarea {
 
 .repeat-star {
   font-style: normal;
-  font-size: 9px;
+  font-size: 1.5cqw;
   opacity: 0.72;
 }
 
@@ -1014,14 +1053,14 @@ textarea {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 6px 0;
+  gap: 1cqw;
+  padding: 1cqw 0;
 }
 
 .editorial-eyebrow {
   margin: 0;
   font-family: 'Cormorant Garamond', Georgia, serif;
-  font-size: clamp(13px, 2vw, 21px);
+  font-size: 3.2cqw;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   font-weight: 500;
@@ -1030,17 +1069,17 @@ textarea {
 .editorial-date {
   margin: 0;
   font-family: 'Cormorant Garamond', Georgia, serif;
-  font-size: clamp(12px, 1.6vw, 16px);
+  font-size: 2.5cqw;
   letter-spacing: 0.05em;
   opacity: 0.72;
 }
 
 .editorial-headline {
-  margin: 10px 0 4px;
+  margin: 1.4cqw 0 0.6cqw;
   font-family: 'Playfair Display', Georgia, serif;
   font-style: italic;
   font-weight: 600;
-  font-size: clamp(42px, 7.6vw, 76px);
+  font-size: 11.8cqw;
   line-height: 0.86;
   letter-spacing: -0.025em;
   display: flex;
@@ -1054,8 +1093,8 @@ textarea {
 
 .editorial-clipped-stamp {
   position: absolute;
-  right: 22px;
-  top: 46%;
+  right: 3.6cqw;
+  top: 44%;
   transform: rotate(10deg);
   z-index: 6;
 }
@@ -1074,52 +1113,52 @@ textarea {
 }
 
 .doodle-star-tl {
-  top: 8px;
-  left: 10px;
-  width: 58px;
-  height: 58px;
+  top: 1.3cqw;
+  left: 1.6cqw;
+  width: 9.5cqw;
+  height: 9.5cqw;
 }
 
 .doodle-star-br {
-  right: 12px;
-  bottom: 24px;
-  width: 50px;
-  height: 50px;
+  right: 2cqw;
+  bottom: 4cqw;
+  width: 8.2cqw;
+  height: 8.2cqw;
 }
 
 .doodle-squiggle-bl {
-  left: 12px;
-  bottom: 8px;
-  width: 78px;
-  height: 52px;
+  left: 2cqw;
+  bottom: 1.3cqw;
+  width: 12.8cqw;
+  height: 8.5cqw;
 }
 
 .doodle-heart-tr {
-  right: 18px;
-  top: 14px;
-  width: 44px;
-  height: 44px;
+  right: 3cqw;
+  top: 2.3cqw;
+  width: 7.2cqw;
+  height: 7.2cqw;
   transform: rotate(12deg);
 }
 
 .doodle-sparkle-tr {
-  right: 14px;
-  top: 12px;
-  width: 48px;
-  height: 48px;
+  right: 2.3cqw;
+  top: 2cqw;
+  width: 7.8cqw;
+  height: 7.8cqw;
 }
 
 /* --- Postcard Back (Reference 2 bottom) --- */
 .postcard-back {
-  padding: 14px;
+  padding: 2.3cqw;
 }
 
 .postcard-back-sheet {
   position: relative;
   width: 100%;
   height: 100%;
-  border-radius: 10px;
-  padding: 18px 26px 14px;
+  border-radius: 1.6cqw;
+  padding: 3cqw 4.2cqw 2.2cqw;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -1127,93 +1166,98 @@ textarea {
 
 .back-header-block {
   text-align: center;
-  padding-right: 48px;
+  padding-right: 12cqw;
 }
 
 .back-title {
   margin: 0;
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: clamp(19px, 3vw, 28px);
+  font-size: 4.4cqw;
   font-weight: 700;
   letter-spacing: 0.09em;
 }
 
 .back-subtitle {
-  margin: 2px 0 0;
+  margin: 0.35cqw 0 0;
   font-family: 'Cormorant Garamond', Georgia, serif;
-  font-size: clamp(11px, 1.5vw, 14px);
+  font-size: 2.25cqw;
   opacity: 0.78;
 }
 
 .back-stamp-slot {
   position: absolute;
-  top: 16px;
-  right: 22px;
+  top: 2.6cqw;
+  right: 3.6cqw;
   z-index: 4;
 }
 
 .back-columns {
   display: grid;
   grid-template-columns: 1fr 1px 0.95fr;
-  gap: 20px;
+  gap: 3.2cqw;
   align-items: stretch;
   flex: 1;
-  margin: 12px 0 6px;
+  margin: 1.8cqw 0 0.8cqw;
   min-height: 0;
 }
 
 .back-message-col {
   display: flex;
-  align-items: center;
-  overflow: hidden;
-  padding-right: 4px;
+  align-items: flex-start;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 0.8cqw;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
 }
 
 .back-message-text {
-  margin: 0;
+  margin: auto 0;
+  width: 100%;
   white-space: pre-wrap;
-  font-size: clamp(14px, 2.05vw, 20px);
-  line-height: 1.38;
+  font-size: 3.1cqw;
+  line-height: 1.36;
   opacity: 0.88;
   overflow-wrap: break-word;
 }
 
 .hw-homemade .back-message-text {
-  font-size: clamp(11px, 1.4vw, 13.5px);
-  line-height: 1.8;
+  font-size: 2.15cqw;
+  line-height: 1.75;
 }
 
 .hw-reenie .back-message-text {
-  font-size: clamp(17px, 2.4vw, 23px);
-  line-height: 1.25;
+  font-size: 3.65cqw;
+  line-height: 1.24;
 }
 
 .back-vertical-divider {
   background: currentColor;
   opacity: 0.45;
-  margin: 8px 0;
+  margin: 1.2cqw 0;
 }
 
 .back-address-col {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding-top: 64px;
-  gap: 14px;
+  padding-top: 11.5cqw;
+  gap: 2.2cqw;
+  min-width: 0;
 }
 
 .address-lines {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 1.3cqw;
 }
 
 .address-line {
-  min-height: 22px;
-  border-bottom: 1.3px solid rgba(40, 32, 34, 0.55);
-  font-size: clamp(14px, 1.8vw, 17px);
+  min-height: 3.6cqw;
+  border-bottom: max(1px, 0.2cqw) solid rgba(40, 32, 34, 0.55);
+  font-size: 2.75cqw;
   line-height: 1.15;
-  padding: 0 4px 2px;
+  padding: 0 0.6cqw 0.35cqw;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1223,19 +1267,19 @@ textarea {
   align-self: flex-end;
   text-align: right;
   white-space: pre-wrap;
-  font-size: clamp(16px, 2.2vw, 21px);
+  font-size: 3.3cqw;
   line-height: 1.15;
   transform: rotate(-4deg);
-  padding-right: 4px;
+  padding-right: 0.6cqw;
   opacity: 0.86;
 }
 
 .back-footer-credit {
   text-align: center;
-  font-size: 9px;
+  font-size: 1.45cqw;
   letter-spacing: 0.22em;
   opacity: 0.52;
-  padding-top: 2px;
+  padding-top: 0.35cqw;
 }
 
 /* ================================
@@ -1264,6 +1308,7 @@ textarea {
   position: relative;
   width: min(500px, 84vw);
   aspect-ratio: 1.44 / 1;
+  container-type: inline-size;
   transform: rotate(-3deg);
   transition: transform 0.72s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -1386,23 +1431,11 @@ textarea {
   transform-origin: center;
 }
 
-/* Adjust font sizes inside smaller envelope-nested card */
-.envelope-card-scaler .front-script-title {
-  font-size: clamp(36px, 6.2vw, 68px);
-}
-
-.envelope-card-scaler .editorial-headline {
-  font-size: clamp(32px, 5.4vw, 56px);
-}
-
-.envelope-card-scaler .editorial-eyebrow {
-  font-size: clamp(10px, 1.4vw, 15px);
-}
-
+/* Clipped stamp angle inside envelope-nested card */
 .envelope-card-scaler .editorial-clipped-stamp {
-  right: -10px;
+  right: -2cqw;
   top: 34%;
-  transform: rotate(14deg) scale(0.84);
+  transform: rotate(14deg) scale(0.88);
 }
 
 .slot-closed {
@@ -1437,7 +1470,7 @@ textarea {
   flex-direction: column;
   justify-content: flex-end;
   align-items: center;
-  padding: 0 24px 20px;
+  padding: 0 5cqw 4.2cqw;
   pointer-events: none;
 }
 
@@ -1462,34 +1495,39 @@ textarea {
 .envelope-front-typography {
   position: relative;
   z-index: 2;
+  width: 92%;
   text-align: center;
   color: var(--env-text);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 0.4cqw;
 }
 
 .env-tag {
-  font-size: 10px;
+  font-size: 2.1cqw;
   font-weight: 700;
   letter-spacing: 0.12em;
   opacity: 0.85;
 }
 
 .env-subtag {
-  font-size: 9.5px;
+  font-size: 2cqw;
   font-weight: 700;
   letter-spacing: 0.14em;
   opacity: 0.82;
 }
 
 .env-motto {
-  margin: 2px 0 0;
+  margin: 0.4cqw 0 0;
   font-family: 'Great Vibes', 'Sacramento', cursive;
-  font-size: clamp(32px, 5.4vw, 52px);
-  line-height: 1;
+  font-size: 9.6cqw;
+  line-height: 1.04;
   font-weight: 400;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Layer 8: Wax seal or clipped stamp when closed */
@@ -1498,8 +1536,8 @@ textarea {
   top: 56%;
   left: 50%;
   transform: translate(-50%, -50%) scale(1);
-  width: 60px;
-  height: 60px;
+  width: 12cqw;
+  height: 12cqw;
   border-radius: 50%;
   z-index: 8;
   display: flex;
@@ -1523,8 +1561,8 @@ textarea {
 }
 
 .wax-seal-ring {
-  width: 44px;
-  height: 44px;
+  width: 8.8cqw;
+  height: 8.8cqw;
   border-radius: 50%;
   border: 1.5px solid rgba(255, 248, 240, 0.45);
   display: flex;
@@ -1532,7 +1570,7 @@ textarea {
   justify-content: center;
   color: rgba(255, 249, 242, 0.94);
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 20px;
+  font-size: 4cqw;
   font-style: italic;
 }
 
@@ -1543,6 +1581,22 @@ textarea {
   transform: translate(-50%, -50%) rotate(8deg);
   z-index: 8;
   transition: transform 0.24s ease, opacity 0.2s ease;
+}
+
+.envelope-closed-stamp .postage-stamp-sm {
+  width: 13cqw;
+  height: 15.5cqw;
+}
+
+.envelope-closed-stamp .postage-stamp-body {
+  padding: 1cqw;
+}
+
+.envelope-closed-stamp .bread-clip {
+  top: -3.2cqw;
+  left: -1.8cqw;
+  width: 6.4cqw;
+  height: 5.2cqw;
 }
 
 .envelope-closed-stamp.is-broken {
@@ -1600,6 +1654,7 @@ textarea {
    ================================ */
 .recipient-screen {
   min-height: 100vh;
+  min-height: 100dvh;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -2035,6 +2090,71 @@ textarea {
   .modal-preview-col {
     border-left: none;
     border-top: 1px solid var(--border-subtle);
+  }
+}
+
+@media (max-width: 600px) {
+  .flip-card-scene {
+    width: min(610px, 94vw);
+  }
+
+  .envelope-body {
+    width: min(500px, 88vw);
+  }
+
+  .envelope-stage-wrap {
+    padding-top: 84px;
+    gap: 18px;
+  }
+
+  .envelope-stage-wrap.stage-closed {
+    padding-top: 16px;
+  }
+
+  .envelope-stage-wrap.stage-opening .envelope-body {
+    transform: rotate(0deg) translateY(20px);
+  }
+
+  .recipient-topbar {
+    padding: 14px 16px;
+  }
+
+  .recipient-stage {
+    padding: 8px 10px 28px;
+  }
+
+  .ceremony-wrap {
+    gap: 16px;
+  }
+
+  .ceremony-heading {
+    font-size: 22px;
+  }
+
+  .extracted-showcase {
+    gap: 14px;
+    width: 100%;
+  }
+
+  .flip-helper-note {
+    font-size: 12px;
+    text-align: center;
+    padding: 0 12px;
+  }
+
+  .extracted-actions {
+    gap: 8px;
+    padding: 0 8px;
+  }
+
+  .extracted-actions .pill-btn {
+    padding: 8px 13px;
+    font-size: 12.5px;
+  }
+
+  .studio-stage {
+    min-height: 360px;
+    padding: 24px 10px;
   }
 }
 
